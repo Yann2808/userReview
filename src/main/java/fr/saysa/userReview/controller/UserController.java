@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.awt.*;
+import java.util.Map;
 
 @Slf4j
 @AllArgsConstructor
@@ -24,5 +25,10 @@ public class UserController {
     public void inscription(@RequestBody Utilisateur user) {
         log.info("Inscription");
         this.userService.inscription(user);
+    }
+
+    @PostMapping(path = "activation")
+    public void activation(@RequestBody Map<String, String> activation) {
+        this.userService.activation(activation);
     }
 }

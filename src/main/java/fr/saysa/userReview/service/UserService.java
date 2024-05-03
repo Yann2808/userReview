@@ -3,18 +3,24 @@ package fr.saysa.userReview.service;
 import fr.saysa.userReview.RoleType;
 import fr.saysa.userReview.entity.Role;
 import fr.saysa.userReview.entity.Utilisateur;
+import fr.saysa.userReview.entity.Validation;
 import fr.saysa.userReview.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class UserService {
+    // Injection dans les services
     private UserRepository userRepository;
     private BCryptPasswordEncoder passwordEncoder;
+    private ValidationService validationService;
+
     public void inscription(Utilisateur utilisateur) {
 
         if(!utilisateur.getEmail().contains("@")) {
@@ -35,7 +41,19 @@ public class UserService {
         roleUtilisateur.setRole(RoleType.USER);
         utilisateur.setRole(roleUtilisateur);
 
-        this.userRepository.save(utilisateur);
+        utilisateur = this.userRepository.save(utilisateur);
 
+        this.validationService.enregistrer(utilisateur);
+    }
+
+    public void activation(Map<String, String> activation) {
+        Validation validation = this.validationService.lireEnFonctionDuCode(activation.get("code"));
+        if(Instant.now().isAfter(validation.getExpiration())) {
+            throw new RuntimeException("Votre code a expiré.");
+        }
+        Utilisateur utilisateurActiver = this.userRepository.findById(validation.getUtilisateur().getId()).orElseThrow(() -> new RuntimeException("Votre utilisateur n'existe pas"));
+
+        utilisateurActiver.setActive(true);
+        this.userRepository.save(utilisateurActiver);
     }
 }
