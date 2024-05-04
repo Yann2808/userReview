@@ -1,6 +1,7 @@
 package fr.saysa.userReview.service;
 
 import fr.saysa.userReview.entity.Validation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -8,7 +9,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class NotificationService {
 
-    JavaMailSender javaMailSender;
+    @Autowired
+    private JavaMailSender javaMailSender;
+
     public void envoyer(Validation validation) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setFrom("no-reply@saysa.bj");
