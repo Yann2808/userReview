@@ -6,6 +6,10 @@ import fr.saysa.userReview.entity.Utilisateur;
 import fr.saysa.userReview.entity.Validation;
 import fr.saysa.userReview.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +19,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     // Injection dans les services
     private UserRepository userRepository;
     private BCryptPasswordEncoder passwordEncoder;
@@ -55,5 +59,12 @@ public class UserService {
 
         utilisateurActiver.setActive(true);
         this.userRepository.save(utilisateurActiver);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return this.userRepository
+                .findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Aucun utilisateur ne correspond à cet identifiant."));
     }
 }
