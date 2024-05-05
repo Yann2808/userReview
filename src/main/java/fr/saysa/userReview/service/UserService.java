@@ -54,14 +54,16 @@ public class UserService implements UserDetailsService {
         if(Instant.now().isAfter(validation.getExpiration())) {
             throw new RuntimeException("Votre code a expiré.");
         }
-        Utilisateur utilisateurActiver = this.userRepository.findById(validation.getUtilisateur().getId()).orElseThrow(() -> new RuntimeException("Votre utilisateur n'existe pas"));
+        Utilisateur utilisateurActiver =
+                this.userRepository.findById(validation.getUtilisateur().getId())
+                        .orElseThrow(() -> new RuntimeException("Votre utilisateur n'existe pas"));
 
         utilisateurActiver.setActive(true);
         this.userRepository.save(utilisateurActiver);
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public Utilisateur loadUserByUsername(String username) throws UsernameNotFoundException {
         return this.userRepository
                 .findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Aucun utilisateur ne correspond à cet identifiant."));

@@ -1,7 +1,8 @@
 package fr.saysa.userReview.controller;
 
-import fr.saysa.userReview.dto.AuthentificationDTO;
+import fr.saysa.userReview.dto.AuthenticationDTO;
 import fr.saysa.userReview.entity.Utilisateur;
+import fr.saysa.userReview.security.JWTService;
 import fr.saysa.userReview.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class UserController {
 
     private AuthenticationManager authenticationManager;
     private final UserService userService;
+    private JWTService jwtService;
 
     @PostMapping(path = "inscription")
     public void inscription(@RequestBody Utilisateur user) {
@@ -37,10 +39,14 @@ public class UserController {
     }
 
     @PostMapping(path = "connexion")
-    public Map<String, String> connexion(AuthentificationDTO authentificationDTO) {
+    public Map<String, String> connexion(@RequestBody AuthenticationDTO authenticationDTO) {
         final Authentication authenticate = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authentificationDTO.username(), authentificationDTO.password())
+                new UsernamePasswordAuthenticationToken(authenticationDTO.username(), authenticationDTO.password())
         );
+
+        if(authenticate.isAuthenticated()) {
+            return this.jwtService.generate(authenticationDTO.username());
+        }
         log.info("Résultat : " + authenticate.isAuthenticated());
         return null;
     }
