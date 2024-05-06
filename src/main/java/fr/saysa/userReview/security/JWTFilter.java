@@ -1,6 +1,5 @@
 package fr.saysa.userReview.security;
 
-import fr.saysa.userReview.entity.Utilisateur;
 import fr.saysa.userReview.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,7 +26,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = null;
         String username = null;
         boolean isTokenExpired = true;
 
@@ -35,7 +33,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // Récupérer le jeton à partir de l'index 8 du champ Authorization
         if (authorization != null && authorization.startsWith("Bearer ")) {
-            jwt = authorization.substring(7);
+            String jwt = authorization.substring(7);
             isTokenExpired = jwtService.isTokenExpired(jwt);
             username = jwtService.extractUsername(jwt);
         }

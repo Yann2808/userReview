@@ -6,7 +6,6 @@ import fr.saysa.userReview.entity.Utilisateur;
 import fr.saysa.userReview.entity.Validation;
 import fr.saysa.userReview.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
