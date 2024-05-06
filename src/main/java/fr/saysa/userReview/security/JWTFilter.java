@@ -16,16 +16,9 @@ import java.io.IOException;
 
 @Service
 public class JWTFilter extends OncePerRequestFilter {
-    /**
-     * @param request
-     * @param response
-     * @param filterChain
-     * @throws ServletException
-     * @throws IOException
-     */
 
-    private UserService userService;
-    private JWTService jwtService;
+    final private UserService userService;
+    final private JWTService jwtService;
 
     public JWTFilter(UserService userService, JWTService jwtService) {
         this.userService = userService;
