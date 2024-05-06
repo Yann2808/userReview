@@ -2,6 +2,7 @@ package fr.saysa.userReview.security;
 
 import fr.saysa.userReview.entity.Utilisateur;
 import fr.saysa.userReview.service.UserService;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -12,14 +13,41 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import java.util.function.Function;
 
 @AllArgsConstructor
 @Service
 public class JWTService {
 
+    final long currentTime = System.currentTimeMillis();
+    final long expirationTime = currentTime + 30 * 60 * 1000;
+
     private final String ENCRYPTION_KEY = "80d6070adcf001df01a80383d6e17f37396c8fac469a238a6ebf03b782399a31";
 
     private UserService userService;
+
+    public String extractUsername(String token) {
+        return this.getClaims(token, Claims::getSubject);
+    }
+
+    public boolean isTokenExpired(String token) {
+        Date expirationDate = getClaims(token, Claims::getExpiration);
+
+        return expirationDate.before(new Date());
+    }
+
+    private <T> T getClaims (String token, Function<Claims, T> claimsResolver) {
+        Claims claims = getAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims getAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(this.getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
 
     public Map<String, String> generate (String username) {
         Utilisateur utilisateur = this.userService.loadUserByUsername(username);
@@ -28,12 +56,11 @@ public class JWTService {
 
     private Map<String, String> generateJet(Utilisateur utilisateur) {
 
-        final Map<String, String> claims = Map.of(
-                utilisateur.getNom(),
-                utilisateur.getEmail()
+        final Map<String, Object> claims = Map.of(
+                "nom", utilisateur.getNom(),
+                Claims.EXPIRATION, new Date(expirationTime),
+                Claims.SUBJECT, utilisateur.getEmail()
         );
-        final long currentTime = System.currentTimeMillis();
-        final long expirationTime = currentTime + 30 * 60 * 1000;
 
         // Jwts déprécié sur la version 0.12.5, je suis revenu sur la 0.11.2
         String bearer = Jwts.builder()
