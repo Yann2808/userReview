@@ -10,6 +10,7 @@ import lombok.*;
 @Entity
 @Table(name = "jwt")
 public class JWT {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

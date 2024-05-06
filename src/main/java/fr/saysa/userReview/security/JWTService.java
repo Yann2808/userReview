@@ -22,10 +22,16 @@ import java.util.function.Function;
 public class JWTService {
 
     public static final String BEARER = "bearer";
-    // Les injections
     private final String ENCRYPTION_KEY = "80d6070adcf001df01a80383d6e17f37396c8fac469a238a6ebf03b782399a31";
+
+    // Les injections
     private UserService userService;
     private JwtRepository jwtRepository;
+
+    public JWT tokenByValue(String value) {
+        return this.jwtRepository.findByValue(value)
+                .orElseThrow(() -> new RuntimeException("Utilisateur inconnu"));
+    }
 
     final long currentTime = System.currentTimeMillis();
     final long expirationTime = currentTime + 30 * 60 * 1000;
