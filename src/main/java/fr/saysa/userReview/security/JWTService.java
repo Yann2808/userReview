@@ -11,10 +11,14 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +26,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+
 @Transactional
 @AllArgsConstructor
 @Service
 public class JWTService {
 
     public static final String BEARER = "bearer";
+    private static final Logger log = LoggerFactory.getLogger(JWTService.class);
     private final String ENCRYPTION_KEY = "80d6070adcf001df01a80383d6e17f37396c8fac469a238a6ebf03b782399a31";
 
     // Les injections
@@ -132,4 +138,10 @@ public class JWTService {
         jwt.setDesactive(true);
         this.jwtRepository.save(jwt);
     }
+
+    @Scheduled(cron = "@daily")
+    public void removeUselessJwt() {
+        log.info("Suppression du token à {}", Instant.now());
+        this.jwtRepository.deleteAllByExpireAndDesactive(true, true);
+}
 }
