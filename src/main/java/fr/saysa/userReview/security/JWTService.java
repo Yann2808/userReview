@@ -9,14 +9,20 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+@Transactional
 @AllArgsConstructor
 @Service
 public class JWTService {
@@ -27,11 +33,6 @@ public class JWTService {
     // Les injections
     private UserService userService;
     private JwtRepository jwtRepository;
-
-    public JWT tokenByValue(String value) {
-        return this.jwtRepository.findByValue(value)
-                .orElseThrow(() -> new RuntimeException("Utilisateur inconnu"));
-    }
 
     final long currentTime = System.currentTimeMillis();
     final long expirationTime = currentTime + 30 * 60 * 1000;
@@ -44,6 +45,14 @@ public class JWTService {
         Date expirationDate = getClaims(token, Claims::getExpiration);
 
         return expirationDate.before(new Date());
+    }
+
+    public JWT tokenByValue(String value) {
+        return this.jwtRepository.findByValueAndDesactiveAndExpire(
+                value,
+                        false,
+                        false)
+                .orElseThrow(() -> new RuntimeException("Utilisateur inconnu"));
     }
 
     private <T> T getClaims (String token, Function<Claims, T> claimsResolver) {
@@ -61,7 +70,8 @@ public class JWTService {
 
     public Map<String, String> generate (String username) {
         Utilisateur utilisateur = this.userService.loadUserByUsername(username);
-        final Map<String, String> jwtMap = this.generateJet(utilisateur);
+        this.disableTokens(utilisateur);
+        final Map<String, String> jwtMap = new HashMap<>(this.generateJet(utilisateur));
 
         final JWT jwt = JWT
                 .builder()
@@ -73,6 +83,17 @@ public class JWTService {
 
         this.jwtRepository.save(jwt);
         return jwtMap;
+    }
+
+    private void disableTokens(Utilisateur utilisateur) {
+        final List<JWT> jwtList = this.jwtRepository.findUtilisateur(utilisateur.getEmail()).peek(
+                jwt -> {
+                    jwt.setDesactive(true);
+                    jwt.setExpire(true);
+                }
+        ).collect(Collectors.toList());
+
+        this.jwtRepository.saveAll(jwtList);
     }
 
     private Map<String, String> generateJet(Utilisateur utilisateur) {
@@ -97,5 +118,18 @@ public class JWTService {
     private Key getKey() {
         final byte[] decoder = Decoders.BASE64.decode(ENCRYPTION_KEY);
         return Keys.hmacShaKeyFor(decoder);
+    }
+
+    public void deconnexion() {
+        Utilisateur utilisateur = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        JWT jwt = this.jwtRepository.findUtilisateurValidToken
+                (utilisateur.getEmail(),
+                        false,
+                        false
+                ).orElseThrow(() -> new RuntimeException("Token invalide"));
+
+        jwt.setExpire(true);
+        jwt.setDesactive(true);
+        this.jwtRepository.save(jwt);
     }
 }
