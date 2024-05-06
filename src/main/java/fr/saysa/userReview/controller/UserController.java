@@ -33,6 +33,7 @@ public class UserController {
         this.userService.inscription(user);
     }
 
+    // Pour l'activation du compte créé en utilisant le code d'activation qui lui a été envoyé par mail
     @PostMapping(path = "activation")
     public void activation(@RequestBody Map<String, String> activation) {
         this.userService.activation(activation);

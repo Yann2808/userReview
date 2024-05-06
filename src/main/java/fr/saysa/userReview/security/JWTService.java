@@ -1,6 +1,8 @@
 package fr.saysa.userReview.security;
 
+import fr.saysa.userReview.entity.JWT;
 import fr.saysa.userReview.entity.Utilisateur;
+import fr.saysa.userReview.repository.JwtRepository;
 import fr.saysa.userReview.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -19,12 +21,14 @@ import java.util.function.Function;
 @Service
 public class JWTService {
 
+    public static final String BEARER = "bearer";
+    // Les injections
+    private final String ENCRYPTION_KEY = "80d6070adcf001df01a80383d6e17f37396c8fac469a238a6ebf03b782399a31";
+    private UserService userService;
+    private JwtRepository jwtRepository;
+
     final long currentTime = System.currentTimeMillis();
     final long expirationTime = currentTime + 30 * 60 * 1000;
-
-    private final String ENCRYPTION_KEY = "80d6070adcf001df01a80383d6e17f37396c8fac469a238a6ebf03b782399a31";
-
-    private UserService userService;
 
     public String extractUsername(String token) {
         return this.getClaims(token, Claims::getSubject);
@@ -51,7 +55,18 @@ public class JWTService {
 
     public Map<String, String> generate (String username) {
         Utilisateur utilisateur = this.userService.loadUserByUsername(username);
-        return this.generateJet(utilisateur);
+        final Map<String, String> jwtMap = this.generateJet(utilisateur);
+
+        final JWT jwt = JWT
+                .builder()
+                .value(jwtMap.get(BEARER))
+                .desactive(false)
+                .expire(false)
+                .utilisateur(utilisateur)
+                .build();
+
+        this.jwtRepository.save(jwt);
+        return jwtMap;
     }
 
     private Map<String, String> generateJet(Utilisateur utilisateur) {
@@ -70,7 +85,7 @@ public class JWTService {
                 .setClaims(claims)
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
-        return Map.of("bearer", bearer);
+        return Map.of(BEARER, bearer);
     }
 
     private Key getKey() {
